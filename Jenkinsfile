@@ -30,6 +30,19 @@ pipeline {
             }
          }
       }
+      stage('Docker Push') {
+         steps {
+            echo "Runnning in $WORKSPACE"
+            dir("$WORKSPACE/azure-vote") {
+               script {
+                  docker.withRegistry('', 'dockerhub') {
+                     def image = docker.build('vdavityan/jenkins-course:2024')
+                     image.push()
+                  }
+               }
+            }
+         }
+      }
    }
    post {
       always {
