@@ -33,6 +33,8 @@ pipeline {
       stage('Run Clair') {
          agent {label 'build-1'}
          steps {
+            sh(script: 'docker stop db clair', returnStdout: true)
+            sh(script: 'docker rm db clair', returnStdout: true)
             sh(script: 'docker run -p 5432:5432 -d --name db arminc/clair-db:latest')
             sh(script: 'docker run -p 6060:6060 --link db:postgres -d --name clair arminc/clair-local-scan:latest')
          }
@@ -53,8 +55,8 @@ pipeline {
    post {
       always {
          sh(script: 'docker compose down')
-         sh(script: 'docker stop db clair')
-         sh(script: 'docker rm db clair')
+         sh(script: 'docker stop db clair', returnStdout: true)
+         sh(script: 'docker rm db clair', returnStdout: true)
       }
    }
 }
