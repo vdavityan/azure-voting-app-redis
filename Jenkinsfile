@@ -52,7 +52,7 @@ pipeline {
             stage('Run Grype') {
                agent {label 'build-1'}
                steps {
-                  grypeScan autoInstall: false, repName: 'grypeReport_${JOB_NAME}_${BUILD_NUMBER}.txt', scanDest: 'registry:blackdentech/jenkins-course:2023'
+                  grypeScan autoInstall: true, repName: 'grypeReport_${JOB_NAME}_${BUILD_NUMBER}.txt', scanDest: 'registry:blackdentech/jenkins-course:2023'
                }
                post {
                   always {
