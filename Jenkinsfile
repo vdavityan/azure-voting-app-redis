@@ -40,7 +40,7 @@ pipeline {
       stage('Run Clair scan') {
          agent {label 'build-1'}
          steps {
-            sh(script: '/home/ubuntu/go/bin/clair-scanner --ip=172.17.0.1 blackdentech/jenkins-course:2023')
+            sh(script: 'clair-scanner --ip=172.17.0.1 vdavityan/jenkins-course:2024')
          }
       }
    }
