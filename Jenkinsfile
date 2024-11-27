@@ -31,23 +31,34 @@ pipeline {
          }
       }
       stage('Run Clair') {
-         agent {label 'build-1'}
+         agent {label 'build-2'}
          steps {
-            sh(script: 'docker stop db clair 2>/dev/null', returnStatus: true)
-            sh(script: 'docker rm db clair 2>/dev/null', returnStatus: true)
             sh(script: 'docker run -p 5432:5432 -d --name db arminc/clair-db:latest')
             sh(script: 'docker run -p 6060:6060 --link db:postgres -d --name clair arminc/clair-local-scan:latest')
          }
       }
-      stage('Run Clair scan') {
-         agent {label 'build-1'}
-         steps {
-            sh(script: 'docker pull vdavityan/jenkins-course:2024')
-            sh(script: 'clair-scanner --ip=172.17.0.1 --report=clairReport.json vdavityan/jenkins-course:2024')
-         }
-         post {
-            always {
-               archiveArtifacts artifacts: 'clairReport.json', fingerprint: true
+      stage('Container Scanning') {
+         parallel {
+            stage('Run Clair scan') {
+               agent {label 'build-2'}
+               steps {
+                  //sh(script: '/home/ubuntu/go/bin/clair-scanner --ip=172.17.0.1 blackdentech/jenkins-course:2023')
+                  sleep time: 1, unit: 'MINUTES'
+               }
+            }
+            stage('Run Grype') {
+               agent {label 'build-1'}
+               steps {
+                  grypeScan autoInstall: false, repName: 'grypeReport_${JOB_NAME}_${BUILD_NUMBER}.txt', scanDest: 'registry:blackdentech/jenkins-course:2023'
+               }
+               post {
+                  always {
+                     recordIssues(
+                        tools: [grype()],
+                        aggregatingResults: true,
+                     )
+                  }
+               }
             }
          }
       }
@@ -55,8 +66,8 @@ pipeline {
    post {
       always {
          sh(script: 'docker compose down')
-         sh(script: 'docker stop db clair 2>/dev/null', returnStatus: true)
-         sh(script: 'docker rm db clair 2>/dev/null', returnStatus: true)
+         sh(script: 'docker stop $(docker ps -aq)')
+         sh(script: 'docker rm $(docker ps -aq)')
       }
    }
 }
