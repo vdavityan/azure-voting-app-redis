@@ -33,8 +33,8 @@ pipeline {
       stage('Run Clair') {
          agent {label 'build-1'}
          steps {
-            sh(script: 'docker stop db clair', returnStatus: true)
-            sh(script: 'docker rm db clair', returnStatus: true)
+            sh(script: 'docker stop db clair 2>/dev/null', returnStatus: true)
+            sh(script: 'docker rm db clair 2>/dev/null', returnStatus: true)
             sh(script: 'docker run -p 5432:5432 -d --name db arminc/clair-db:latest')
             sh(script: 'docker run -p 6060:6060 --link db:postgres -d --name clair arminc/clair-local-scan:latest')
          }
@@ -43,11 +43,11 @@ pipeline {
          agent {label 'build-1'}
          steps {
             sh(script: 'docker pull vdavityan/jenkins-course:2024')
-            sh(script: 'clair-scanner --ip=172.17.0.1 --report=clairReport_${BUILD_NUMBER}.json vdavityan/jenkins-course:2024')
+            sh(script: 'clair-scanner --ip=172.17.0.1 --report=clairReport.json vdavityan/jenkins-course:2024')
          }
          post {
             always {
-               archiveArtifacts artifacts: 'clairReport_${BUILD_NUMBER}.json', fingerprint: true
+               archiveArtifacts artifacts: 'clairReport.json', fingerprint: true
             }
          }
       }
@@ -55,8 +55,8 @@ pipeline {
    post {
       always {
          sh(script: 'docker compose down')
-         sh(script: 'docker stop db clair', returnStatus: true)
-         sh(script: 'docker rm db clair', returnStatus: true)
+         sh(script: 'docker stop db clair 2>/dev/null', returnStatus: true)
+         sh(script: 'docker rm db clair 2>/dev/null', returnStatus: true)
       }
    }
 }
