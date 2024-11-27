@@ -41,15 +41,20 @@ pipeline {
          agent {label 'build-1'}
          steps {
             sh(script: 'docker pull vdavityan/jenkins-course:2024')
-            sh(script: 'clair-scanner --ip=172.17.0.1 vdavityan/jenkins-course:2024')
+            sh(script: 'clair-scanner --ip=172.17.0.1 vdavityan/jenkins-course:2024 --report=clairReport_${JOB_NAME}_${BUILD_NUMBER}.txt')
+         }
+         post {
+            always {
+               archiveArtifacts artifacts: 'clairReport_${JOB_NAME}_${BUILD_NUMBER}.txt', fingerprint: true
+            }
          }
       }
    }
    post {
       always {
          sh(script: 'docker compose down')
-         sh(script: 'docker stop $(docker ps -aq)')
-         sh(script: 'docker rm $(docker ps -aq)')
+         sh(script: 'docker stop db clair')
+         sh(script: 'docker rm db clair')
       }
    }
 }
