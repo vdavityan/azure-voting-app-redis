@@ -41,11 +41,11 @@ pipeline {
          agent {label 'build-1'}
          steps {
             sh(script: 'docker pull vdavityan/jenkins-course:2024')
-            sh(script: 'clair-scanner --ip=172.17.0.1 vdavityan/jenkins-course:2024 --report=clairReport_${JOB_NAME}_${BUILD_NUMBER}.txt')
+            sh(script: 'clair-scanner --ip=172.17.0.1 --report=clairReport_${JOB_NAME}_${BUILD_NUMBER}.json vdavityan/jenkins-course:2024')
          }
          post {
             always {
-               archiveArtifacts artifacts: 'clairReport_${JOB_NAME}_${BUILD_NUMBER}.txt', fingerprint: true
+               archiveArtifacts artifacts: 'clairReport_${JOB_NAME}_${BUILD_NUMBER}.json', fingerprint: true
             }
          }
       }
