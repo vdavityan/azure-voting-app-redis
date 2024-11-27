@@ -40,6 +40,7 @@ pipeline {
       stage('Run Clair scan') {
          agent {label 'build-1'}
          steps {
+            sh(script: 'docker pull vdavityan/jenkins-course:2024')
             sh(script: 'clair-scanner --ip=172.17.0.1 vdavityan/jenkins-course:2024')
          }
       }
