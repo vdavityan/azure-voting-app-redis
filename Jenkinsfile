@@ -30,47 +30,56 @@ pipeline {
             }
          }
       }
-      stage('Run Clair') {
-         agent {label 'build-2'}
+      stage('Docker Push') {
          steps {
-            sh(script: 'docker stop db clair 2>/dev/null', returnStatus: true)
-            sh(script: 'docker rm db clair 2>/dev/null', returnStatus: true)
-
-            sh(script: 'docker run -p 5432:5432 -d --name db arminc/clair-db:latest')
-            sh(script: 'docker run -p 6060:6060 --link db:postgres -d --name clair arminc/clair-local-scan:latest')
-         }
-      }
-      stage('Container Scanning') {
-         parallel {
-            stage('Run Clair scan') {
-               agent {label 'build-2'}
-               steps {
-                  //sh(script: '/home/ubuntu/go/bin/clair-scanner --ip=172.17.0.1 blackdentech/jenkins-course:2023')
-                  sleep time: 1, unit: 'MINUTES'
-               }
-            }
-            stage('Run Grype') {
-               agent {label 'build-1'}
-               steps {
-                  grypeScan autoInstall: true, repName: 'grypeReport_${JOB_NAME}_${BUILD_NUMBER}.txt', scanDest: 'registry:blackdentech/jenkins-course:2023'
-               }
-               post {
-                  always {
-                     recordIssues(
-                        tools: [grype()],
-                        aggregatingResults: true,
-                     )
+            echo "Runnning in $WORKSPACE"
+            dir("$WORKSPACE/azure-vote") {
+               script {
+                  docker.withRegistry('', 'dockerhub') {
+                     def image = docker.build('vdavityan/jenkins-course:2024')
+                     image.push()
                   }
                }
             }
+         }
+      }
+      stage('QA Deploy') {
+         environment {
+            KUBECONFIG = credentials('qa-kubeconfig')
+         }
+         when {
+            branch 'feature/k8s-deploy'
+         }
+         steps {
+            sh "kubectl apply -f azure-vote-all-in-one-redis.yaml --kubeconfig $KUBECONFIG"
+         }
+      }
+      stage('Approve Deploy to PROD') {
+         when {
+            branch 'feature/k8s-deploy'
+         }
+         options {
+            timeout(time: 1, unit: 'HOURS')
+         }
+         steps {
+            input message: "Deploy to PROD?"
+         }
+      }
+      stage('PROD Deploy') {
+         environment {
+            KUBECONFIG = credentials('prod-kubeconfig')
+         }
+         when {
+            branch 'feature/k8s-deploy'
+         }
+         steps {
+            sh "kubectl apply -f azure-vote-all-in-one-redis.yaml --kubeconfig $KUBECONFIG"
          }
       }
    }
    post {
       always {
          sh(script: 'docker compose down')
-         sh(script: 'docker stop db clair 2>/dev/null', returnStatus: true)
-         sh(script: 'docker rm db clair 2>/dev/null', returnStatus: true)
       }
    }
 }
