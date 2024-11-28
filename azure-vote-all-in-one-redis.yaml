@@ -57,7 +57,8 @@ spec:
         "kubernetes.io/os": linux
       containers:
       - name: azure-vote-front
-        image: mcr.microsoft.com/azuredocs/azure-vote-front:v1
+        # image: mcr.microsoft.com/azuredocs/azure-vote-front:v1
+        image: vdavityan/jenkins-course:2024
         ports:
         - containerPort: 80
         resources:
