@@ -31,7 +31,7 @@ pipeline {
          }
       }
       stage('Run Grype') {
-         agent {label 'build-1'}
+         agent {label 'build-2'}
          steps {
             grypeScan autoInstall: true, repName: 'grypeReport_${JOB_NAME}_${BUILD_NUMBER}.txt', scanDest: 'registry:vdavityan/jenkins-course:2024'
          }
